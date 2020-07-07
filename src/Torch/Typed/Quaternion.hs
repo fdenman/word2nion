@@ -72,16 +72,23 @@ type HasQuaternions f = ((f `Mod` 4) ~ 0)
 -- | Blehh. This should really be in GHC.TypeLits.KnownNat.Solver but it's not.
 type DivisionProofs n d =
   ( n `Div` d <= n,
+  -- | Are we defining division here? I think I'm being thick about types... this assumes d is a real number greater than 1, no? 
     Div n d + Div n d <= n,
+    -- | and this that d is 2 or greater?
     Div n (d `Div` 2) + Div n d <= n,
+    -- | This I might understand, but is it an important rule? I guess you know!
     (n - Div n d) + Div n d <= n,
+    -- | wow, is it not the case that this necessarily equals n? 
     (Div n d * d)
       ~ ((n - Div n d) + Div n d)
+    -- | type synonyms, not equal values...
   )
 
 -- | This monstrosity is static proof that we can pull out and concatenate quaternion compnents
 -- from a given tensor.
-type HasQuaternionComponents shape dim featureSize device dtype =
+type HasQuaternionComponents shape 
+
+featureSize device dtype =
   ( Narrow shape dim 0 (Div featureSize 4) ~ Eval (ApplyToLast QuaternionComponent shape),
     Narrow shape dim (featureSize `Div` 4) (Div featureSize 4) ~ Eval (ApplyToLast QuaternionComponent shape),
     Narrow shape dim (featureSize `Div` 2) (Div featureSize 4) ~ Eval (ApplyToLast QuaternionComponent shape),
@@ -131,6 +138,7 @@ type QuaternionDimToNarrow =
   Case
     [ 2 --> 1,
       3 --> 2
+   -- | is the task here to manually implement successive reduction by 1 in number of dimensions? 
     ]
 
 -- | Accessors:  gets the real and imaginary components from a tensor.
@@ -158,6 +166,7 @@ modulous ::
   Tensor device dtype shape ->
   Tensor device dtype (Eval (ApplyToLast QuaternionComponent shape))
 modulous t' = root
+-- |f here the apostophe indicates, by convention a strict/non-lazy type corrolary/affinity to r? 
   where
     root = sqrt $ (r' * r' + i' * i' + j' * j' + k' * k')
     r' = r t'
